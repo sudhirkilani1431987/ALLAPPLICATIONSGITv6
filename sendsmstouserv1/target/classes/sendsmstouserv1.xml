@@ -43,7 +43,7 @@ http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/em
              
             </otherwise>
         </choice>
-        <logger message="flow ocpleted" level="INFO" doc:name="Logger"/>
+        <logger message="flow completed" level="INFO" doc:name="Logger"/>
         <!--  <set-variable variableName="TONUMBER" value="#[message.inboundProperties.'http.query.params'.tonumber]" doc:name="Variable"/>-->
     </flow>
 </mule>
