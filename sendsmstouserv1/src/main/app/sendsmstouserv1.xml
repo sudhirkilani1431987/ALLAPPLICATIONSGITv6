@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:smtp="http://www.mulesoft.org/schema/mule/smtp" xmlns:imap="http://www.mulesoft.org/schema/mule/imap" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/smtp http://www.mulesoft.org/schema/mule/smtp/current/mule-smtp.xsd
+http://www.mulesoft.org/schema/mule/imap http://www.mulesoft.org/schema/mule/imap/current/mule-imap.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd">
+    <http:listener-config name="HTTP_Listener_Configuration" host="0.0.0.0" port="8010" doc:name="HTTP Listener Configuration"/>
+    <spring:beans>
+        <spring:bean name="SpringBean" class="sendsmstouserv1.GreetingService"/>
+    </spring:beans>
+    <smtp:gmail-connector name="Gmail" fromAddress="test@sduhirmule.com" subject="test mail" validateConnections="true" doc:name="Gmail"/>
+    <imap:connector name="IMAP" validateConnections="true" doc:name="IMAP"/>
+    <smtp:gmail-connector name="Gmail1" fromAddress="test@mulsudhir.com" subject="test mule" validateConnections="true" doc:name="Gmail"/>
+    <smtp:connector name="SMTP" fromAddress="sukilani@teksystems.com" subject="test" validateConnections="true" doc:name="SMTP"/>
+    <email:string-to-email-transformer mimeType="text/html" name="String_to_Email" doc:name="String to Email"/>
+
+    <flow name="testsmsv10Flow">
+        <http:listener config-ref="HTTP_Listener_Configuration" path="/" doc:name="HTTP" allowedMethods="POST"/>
+        <logger message="strted_the intake msge is #[payload]" level="INFO" doc:name="Logger"/>
+        <set-variable variableName="MODE" value="#[json:MODEOFINFORMATION/'MODE']" doc:name="Take Mode Info"/>
+        <set-variable variableName="TONUMBER" value="#[json:MODEOFINFORMATION/'TONUMBER']" doc:name="Take ToNumber"/>
+        <set-variable variableName="BODYOFTHEMESSAGE" value="#[json:MODEOFINFORMATION/'BODYOFTHEMESSAGE']" doc:name="TakeBodyOfTheMessage"/>
+        <choice doc:name="Choice">
+            <when expression="flowVars.MODE=='SMS'">
+                <invoke name="tes" object-ref="SpringBean" method="publishsms" methodArguments="#[flowVars.TONUMBER],#[flowVars.BODYOFTHEMESSAGE]" methodArgumentTypes="java.lang.String,java.lang.String" doc:name="Invoke"/>
+                <logger message="compted" level="INFO" doc:name="Logger"/>
+            </when>
+            <otherwise>
+                <parse-template location="C:\Users\sukilani\AnypointStudio(6.3.0)\workspace_WithJDK7\testsmsv10\src\test\responseHtml.template" doc:name="Parse Template" metadata:id="e33bc322-1180-41d2-9b65-1815606584fb"/>
+                <logger message="after parsing : #[payload]" level="ERROR" doc:name="Logger"/>
+                <set-property propertyName="test" value="" mimeType="text/html" doc:name="Property"/>
+                <set-payload value="#[payload]" mimeType="text/xhtml" doc:name="Set Payload" metadata:id="602d7799-eab1-4fa8-b473-7e6f220be452"/>
+                 <smtp:outbound-endpoint host="smtp.gmail.com" port="587" user="sudhir.kilani1431987@gmail.com" password="Amma@12345" connector-ref="Gmail" to="sudhir.kilani1431987@gmail.com" from="test@sudhirmule.com" subject="test hre" responseTimeout="10000"  mimeType="text/html" doc:name="SMTP" metadata:id="1ab15c33-9911-4270-86eb-ae4fe39a8596"/>
+                    <!-- <smtp:outbound-endpoint host="smtp-mail.outlook.com" user="sukilani@teksystems.com" password="Tek@123456" connector-ref="SMTP" to="sukilani@teksystems.com" from="sukilani@teksystems.com" subject="test" responseTimeout="10000" doc:name="SMTP_OtherServer" port="587"/>-->
+                <logger level="ERROR" doc:name="Logger"/>
+             
+            </otherwise>
+        </choice>
+        <logger message="flow ocpleted" level="INFO" doc:name="Logger"/>
+        <!--  <set-variable variableName="TONUMBER" value="#[message.inboundProperties.'http.query.params'.tonumber]" doc:name="Variable"/>-->
+    </flow>
+</mule>
